@@ -37,6 +37,7 @@
 #include "esb.h"
 
 #include <nrfx_clock.h>
+#include <hal/nrf_clock.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
@@ -49,7 +50,13 @@ static void set_usb_app_version(void);
 
 static int startHFClock(void)
 {
+    nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED);
     nrfx_clock_hfclk_start();
+    while (!nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED)) {
+        /* Busy-wait until HFXO (crystal) is stable. The radio's RF
+         * frequency is only accurate when sourced from HFXO. */
+    }
+    nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED);
 	return 0;
 }
 
